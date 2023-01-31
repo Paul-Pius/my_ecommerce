@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const asyncHandler = require("express-async-handler");
 const { generateToken } = require("../config/jwtToken");
+const validateMongodbId = require("../utils/validateMongodbId");
 
 const createUser = asyncHandler(async (req, res) => {
     const email = req.body.email;
@@ -32,10 +33,11 @@ const loginUserControl = asyncHandler(async (req, res) => {
 });
 
 const updatedUser = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+    const { _id } = req.user;
+    validateMongodbId(_id)
        
     try {
-        const updateUser = await User.findByIdAndUpdate(id, {
+        const updateUser = await User.findByIdAndUpdate( _id, {
             firstname: req?.body?.firstname,
             lastname: req?.body?.lastname,
             email: req?.body?.email,
@@ -62,6 +64,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
 
 const getAUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    validateMongodbId(id)
 
     try {
         const getUser = await User.findById(id);
@@ -73,6 +76,7 @@ const getAUser = asyncHandler(async (req, res) => {
 
 const deleteAUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    validateMongodbId(id)
 
     try {
         const deleteUser = await User.findByIdAndDelete(id);
@@ -82,11 +86,53 @@ const deleteAUser = asyncHandler(async (req, res) => {
     }
 });
 
+const blockUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    validateMongodbId(id)
+    try {
+        const block = await User.findByIdAndUpdate(id, 
+            {
+                isBlocked: true
+            },
+            {
+                new: true
+            }
+            );
+    } catch(error) {
+        throw new Error(error);
+    }
+    res.json({
+        message: "user Blocked"
+    })
+})
+ 
+const unblockUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    validateMongodbId(id)
+    try {
+        const unblock = await User.findByIdAndUpdate(id, 
+            {
+                isBlocked: false
+            },
+            {
+                new: true
+            }
+            );
+    } catch(error) {
+        throw new Error(error);
+    }
+    res.json({
+        message: "user Unblocked"
+    })
+})
+
 module.exports = { 
     createUser, 
     loginUserControl, 
     getAllUsers, 
     getAUser, 
     deleteAUser, 
-    updatedUser 
+    updatedUser,
+    blockUser,
+    unblockUser 
 };
